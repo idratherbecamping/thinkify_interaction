@@ -22,11 +22,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Read the inclusive classroom content
-with open("example_content/inclusive_classroom.md", "r") as file:
+with open("example_content/navigating_spd_webinar_formatted.md", "r") as file:
     SYSTEM_CONTENT = file.read()
 
 class ChatRequest(BaseModel):
@@ -46,9 +51,14 @@ class ConversationManager:
         if not conversation_id:
             conversation_id = str(uuid.uuid4())
             self.conversations[conversation_id] = [
-                {"role": "system", "content": f"You are an AI assistant knowledgeable about inclusive education practices. Use the following content to answer questions about inclusive classrooms, teaching strategies, and educational equity. Content: {SYSTEM_CONTENT} \
-                Keep your responses concise and to the point. Use bullets and lists when appropriate. Use markdown formatting."}
+                {"role": "system", "content": f"You are an AI assistant knowledgeable about Sensory Processing Disorder (SPD) and sensory integration strategies. \
+                  Use the following course content to answer questions on how to understand, identify, and support individuals with sensory processing challenges. \
+                  Your responses should draw from the material, including definitions, subtypes, behavioral signs, intervention strategies, and researchbacked recommendations.\
+                  Content: {SYSTEM_CONTENT} Keep your responses concise and to the point. Use bullets and lists when appropriate. Use markdown formatting."}
             ]
+
+
+    
         elif conversation_id not in self.conversations:
             raise HTTPException(status_code=400, detail="Invalid conversation ID")
         return conversation_id
@@ -75,7 +85,7 @@ async def chat(request: ChatRequest):
         response = client.chat.completions.create(
             model="gpt-4o-2024-08-06",
             messages=conversation_manager.get_messages(conversation_id),
-            max_tokens=500
+            # max_tokens=500
         )
         
         # Add assistant response to conversation history
@@ -89,4 +99,6 @@ async def chat(request: ChatRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "8000"))
+    uvicorn.run(app, host=host, port=port) 

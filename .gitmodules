@@ -1,0 +1,3 @@
+[submodule "llama_index_RAG"]
+	path = llama_index_RAG
+	url = https://github.com/idratherbecamping/llama_index_RAG.git
